@@ -23,12 +23,15 @@ def circle(time):
             s, e = loc, ((loc + dif) % L)
 
             # 있는 지 확인
-            if e < s:
+            if dif >= L:
+                people_dict[name] -= 1
+                sushi_lst[i][2] = 1
+
+
+            elif e < s:
                 if s < people_index[name]  + L < e + L:
                     people_dict[name] -= 1
                     sushi_lst[i][2] = 1
-                    
-                    
                     
             else: 
                 if s <= people_index[name] <= e:
