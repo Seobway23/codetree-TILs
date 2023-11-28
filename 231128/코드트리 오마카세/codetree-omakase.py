@@ -1,98 +1,110 @@
 from copy import deepcopy
 
-L, Q = map(int, input().split())
-# 필요 자료 구조
-sushi_lst = dict() # 초밥 리스트
-people_dict = dict() # 사람 cnt
-people_index = dict() # 사람 자리
+def plus_sushi():
+    global lst, sushi, people
 
-def circle(time):
-    global L, sushi_lst
-    temp = deepcopy(sushi_lst)
+    time, loc, name = int(lst[1]), int(lst[2]), lst[3]
+    
+    if name in sushi:
+        sushi[name].append([time, loc])
+    
+    else:
+        sushi[name] = [[time, loc]]
+    
+    update(time)
+    return
 
-    # table 순회
-    for i in sushi_lst:
+def plus_people():
+    global lst, sushi, people
 
-        flag = 0
-        # 타임에 따라서 다르게 하기
-        t, loc, name = sushi_lst[i][0], sushi_lst[i][1], i
-        t, loc, time = int(t), int(loc), int(time)
-        dif = time - t
-        
-        # 범위 내 있는지 확인
-        people_list = people_dict.keys()
+    time, loc, name, eat = int(lst[1]), int(lst[2]), lst[3], int(lst[4])
+    people[name] = [eat, loc]
+    update(time)
+    return
 
-        if name in people_list:
-            s, e = loc, ((loc + dif) % L)
+def print_ans():
+    global lst, L, sushi, people
+    time = int(lst[1])
+    update(time)
 
-            # 있는 지 확인
-            if dif >= L:
-                people_dict[name] -= 1
-                del temp[i]
+    # 각 갯수 cnt
+    people_cnt = len(people)
+    sushi_cnt = 0
+    for ss in sushi:
+        sushi_cnt += len(sushi[ss])
+    
+    print(people_cnt, sushi_cnt)
+    return
 
+def update(time):
+    global L, sushi, people
+    temp = deepcopy(sushi)
 
-            elif e < s:
-                if s < people_index[name]  + L < e + L:
-                    people_dict[name] -= 1
-                    del temp[i]
+    for index in sushi: # sushi [0]: time, [1]: location
+        for i in range(len(sushi[index])-1, -1, -1):
+            flag = 0
+            dif = time - sushi[index][i][0]
+
+            start, end = sushi[index][i][1], sushi[index][i][1] + dif
+
+            if index in people: # 만약 사람이 있으면 먹었는지 확인
+            
+                if dif >= L:
+                    del temp[index][i] # 스시 삭제
+                    if len(temp[index]) == 0: # 만약 전부 다 먹으면 
+                        del temp[index] # 이름-스시 전부 삭제
+                    people[index][0] -= 1 # 사람 eat -1
+                    if people[index][0] == 0: #만약 사람이 전부 먹었다면
+                        del people[index] # 사람 삭제
+                    flag = 1
+
+                else: # dif < L 이라면
+                    if end < start:
+                        if start <= people[index][1] + L <= end + L :
+                            del temp[index][i] # 스시 삭제
+                            if len(temp[index]) == 0: # 만약 전부 다 먹으면 
+                                del temp[index] # 이름-스시 전부 삭제
+                            people[index][0] -= 1 # 사람 eat -1
+                            if people[index][0] == 0: #만약 사람이 전부 먹었다면
+                                del people[index] # 사람 삭제
+                            flag = 1
+                    else:
+                        # 정방향 범위내
+                        if start <= people[index][1] <= end:
+                            del temp[index][i] # 스시 삭제
+                            if len(temp[index]) == 0: # 만약 전부 다 먹으면 
+                                del temp[index] # 이름-스시 전부 삭제
+                            people[index][0] -= 1 # 사람 eat -1
+                            if people[index][0] == 0: #만약 사람이 전부 먹었다면
+                                del people[index] # 사람 삭제
+                            flag = 1
                     
-            else: 
-                if s <= people_index[name] <= e:
-                    people_dict[name] -= 1
-                    del temp[i]
+            if flag == 0:
+                # print("갱신해야돼:", time, index, temp[index][i])
+                # print("갱신 대상:", temp)
+                temp[index][i][0] = time # time 갱신
+                temp[index][i][1] = ((temp[index][i][1] + dif) % L)
 
-            # cnt가 0인지 확인
-            if people_dict[name] == 0:
-                del people_dict[name]
-                del people_index[name]
-                flag= 1
-        # 갱신
-        if flag == 0 and i in temp:
-            # if i in temp:
-            # print("i:",i, ", temp[i][0]:", temp[i][0] )
-            temp[i][0] = time
-            temp[i][1] = ((loc + dif) % L)
-
-    # 스시 딕셔너리 갱신
-    sushi_lst = temp
-
-    # print("갱신된 suhsi:", sushi_lst)
-    # print("현재 people:",people_dict)
+    sushi = temp
     return
 
+# 자료구조 선언
+sushi = dict() # [0]: time, [1]: location
+people = dict() # [0]: eat, [1]: location
 
 
-def plus_sushi(lst):
-    time, loc, name = lst[1:]
-    time, loc = int(time), int(loc)
-    sushi_lst[name] = [time, loc]
-    circle(time)
-    return
-
-def plus_people(lst):
-    time, loc, name, cnt = lst[1:]
-    time, loc, cnt = int(time), int(loc), int(cnt)
-    people_dict[name] = cnt
-    people_index[name] = loc
-    circle(time)
-    return
-
-def print_sushi(lst):
-    time = lst[1]
-    circle(time)
-    print(len(people_dict), len(sushi_lst))
-    return
-
-
-
-for i in range(Q):
+# 입력 선언
+L, Q = map(int, input().split())
+for _ in range(Q):
     lst = list(input().split())
-    if lst[0] == "100" :
-        plus_sushi(lst)
+    
+    if lst[0] == "100":
+        plus_sushi()
 
-
-    if lst[0] == "200":
-        plus_people(lst)
-
-    if lst[0] == "300":
-        print_sushi(lst)
+    elif lst[0] == "200":
+        plus_people()
+    
+    elif lst[0] == "300":
+        # print("sushi:", sushi)
+        # print("people:", people)
+        print_ans()
