@@ -33,7 +33,7 @@ def target():
                 push_lst[4] = j
                 key_lst.append(push_lst)
 
-    key_lst.sort(key=lambda x: (x[0], x[1], -x[2], -x[4]))
+    key_lst.sort(key=lambda x: (x[0], -x[1], -x[2], -x[4]))
     return
 
 
@@ -42,15 +42,15 @@ def attack():
     # key => 0공격력, 1최근 공격, 2행과 열 합, 3행, 4열
     # 공격 하는 타워
     atk_tow = key_lst[0]
-
-    # 공격력 m + n 만큼 증가
-    atk_tow[0] += n + m
-
     turn_arr[atk_tow[3]][atk_tow[4]] = turn + 1
     # 공격 당하는 타워
     key_lst.sort(key=lambda x: (-x[0], -x[1], -x[2], -x[4]))
     target_tow = key_lst[0]
-    # print(atk_tow, target_tow)
+    # print("공격 타워:", atk_tow, ", 공격 받는 타워:", target_tow)
+
+    # 공격력 m + n 만큼 증가
+    atk_tow[0] += n + m
+    arr[atk_tow[3]][atk_tow[4]] += n + m
 
     laser_lst = laser(atk_tow, target_tow)
     if laser_lst:
@@ -75,6 +75,8 @@ def attack():
 
     # 포탄 공격
     else:
+        # print("포탑ㅇ다!")
+        # print(atk_tow)
         # target_tow 는 atk_tow[0] 만큼 공격 받음
         # 주변 8방향은 atk_tow // 2
         for i in range(-1, 2):
@@ -101,8 +103,10 @@ def attack():
                         arr[ni][nj] = 0
 
     # repair 전 last_atk 에 atk_tow, target_tow 추가
-    last_atk.append([atk_tow[3], atk_tow[4]])
-    last_atk.append([target_tow[3], target_tow[4]])
+    if [atk_tow[3], atk_tow[4]] not in last_atk:
+        last_atk.append([atk_tow[3], atk_tow[4]])
+    if [target_tow[3], target_tow[4]] not in last_atk:
+        last_atk.append([target_tow[3], target_tow[4]])
 
     # print("last:",last_atk)
     # repair
@@ -112,16 +116,17 @@ def attack():
                 # 공격 가담 X -> 공격력 + 1
                 arr[i][j] += 1
     # atk repair
-    arr[atk_tow[3]][atk_tow[4]] += n + m
-
+    # print("공격 index:", atk_tow[3],atk_tow[4])
+    # print(arr[atk_tow[3]][atk_tow[4]])
     # last_atk 갱신
     last_atk = []
     return
 
 
 def max_atk():
-    # pprint(arr)
     global turn_arr
+
+
     ans_lst = []
     for i in range(1, n + 1):
         for j in range(1, m + 1):
