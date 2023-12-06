@@ -34,26 +34,39 @@ def target():
                 key_lst.append(push_lst)
 
     key_lst.sort(key=lambda x: (x[0], -x[1], -x[2], -x[4]))
+    # print(turn, "번째, 턴")
     return
 
 
 def attack():
     global key_lst, last_atk
+
+    # print( turn, "어택전 arr")
+    # pprint(arr)
+    # print()
+
     # key => 0공격력, 1최근 공격, 2행과 열 합, 3행, 4열
     # 공격 하는 타워
     atk_tow = key_lst[0]
     turn_arr[atk_tow[3]][atk_tow[4]] = turn + 1
     # 공격 당하는 타워
-    key_lst.sort(key=lambda x: (-x[0], -x[1], -x[2], -x[4]))
+    key_lst.sort(key=lambda x: (-x[0], x[1], x[2], x[4]))
     target_tow = key_lst[0]
+    # print("공격받는자 리스트")
+    # pprint( key_lst)
     # print("공격 타워:", atk_tow, ", 공격 받는 타워:", target_tow)
 
     # 공격력 m + n 만큼 증가
     atk_tow[0] += n + m
     arr[atk_tow[3]][atk_tow[4]] += n + m
+    # print("공격력:", atk_tow[0], arr[atk_tow[3]][atk_tow[4]])
+
+    # print("공격자:", atk_tow[3],atk_tow[4])
+    # print("공격 받는 위치:", target_tow[3], target_tow[4])
 
     laser_lst = laser(atk_tow, target_tow)
     if laser_lst:
+        # print("레이저다")
         # print(laser_lst)
         # 주변 타워 -atk//2
 
@@ -75,8 +88,7 @@ def attack():
 
     # 포탄 공격
     else:
-        # print("포탑ㅇ다!")
-        # print(atk_tow)
+        # print("포탑이다!")
         # target_tow 는 atk_tow[0] 만큼 공격 받음
         # 주변 8방향은 atk_tow // 2
         for i in range(-1, 2):
@@ -89,11 +101,12 @@ def attack():
                 if arr[ni][nj] != 0:
                     # target 일 때,
                     if (ni,nj) == (target_tow[3], target_tow[4]):
-                        arr[ni][nj] -= target_tow[0]
+                        arr[ni][nj] -= atk_tow[0]
 
                     # 아닐 때,
                     else:
-                        arr[ni][nj] -= target_tow[0] // 2
+                        # print()
+                        arr[ni][nj] -= atk_tow[0] // 2
 
                     # last_atk 추가
                     last_atk.append([ni, nj])
@@ -108,16 +121,12 @@ def attack():
     if [target_tow[3], target_tow[4]] not in last_atk:
         last_atk.append([target_tow[3], target_tow[4]])
 
-    # print("last:",last_atk)
     # repair
     for i in range(1, n + 1):
         for j in range(1, m +1):
             if arr[i][j] !=0 and [i, j] not in last_atk:
                 # 공격 가담 X -> 공격력 + 1
                 arr[i][j] += 1
-    # atk repair
-    # print("공격 index:", atk_tow[3],atk_tow[4])
-    # print(arr[atk_tow[3]][atk_tow[4]])
     # last_atk 갱신
     last_atk = []
     return
@@ -125,7 +134,6 @@ def attack():
 
 def max_atk():
     global turn_arr
-
 
     ans_lst = []
     for i in range(1, n + 1):
@@ -151,20 +159,19 @@ def laser(atk_tow, target_tow):
             if flag == 1:
                 break
 
-            ni, nj = ti + di, tj + dj
-            if is_in_range(ni, nj) and arr[ni][nj] > 0:
+            ni, nj = (ti + di) % n, (tj + dj) % m
+            # print(ni, nj)
+            # print(laser_lst)
+            if arr[ni][nj] > 0:
                 if [ni, nj] not in laser_lst:
                     if [ni, nj] == [target_tow[3], target_tow[4]]:
+                        laser_lst.append([ni, nj])
                         return laser_lst
 
                     q.append([ni, nj])
                     laser_lst.append([ni, nj])
                     flag = 1
     return laser_lst
-
-
-def is_in_range(i, j):
-    return 1 <= i <= n and 1 <= j <= m
 ####
 
 
