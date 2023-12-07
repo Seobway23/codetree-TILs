@@ -4,172 +4,155 @@
 
 from collections import deque
 
-n, m, k = map(int, input().split()) # n 행, m 열, k 턴
-arr = [[0 for _ in range(m + 1)] for _ in range(n + 1)]
-turn_arr = [[0 for _ in range(m + 1)] for _ in range(n + 1)]
 
-for i in range(1, n + 1):
-    arr[i][1:] = list(map(int, input().split()))
+def attack_check():
+    ai, aj = 0, 0
+    power = 5001
 
-
-def select_tow():
-    global atk_tow, tgk_tow, ans_flag
-    # 포탑 리스트, 포탑 이라면 추가, key 값으로 sort 할 것
-    tow_lst = []
-
-    for i in range(1, n + 1):
-        for j in range(1, m + 1):
-            if arr[i][j] > 0:
-                # 0 공격력, 1 최근 공격 포탑, 2 i + j, 3 i, 4 j
-                tow_lst.append([arr[i][j], turn_arr[i][j], i + j, i, j])
-
-    if len(tow_lst) == 1:
-        ans_flag = True
-        return
-    # 가장 약한 포탑 선정
-    # 0 낮음, 1 높음, 2 높음, 4 높음
-    # x[0] , -x[1], -x[2], -x[4]
-    tow_lst.sort(key=lambda x: (x[0], -x[1], -x[2], -x[4]))
-    # print(tow_lst)
-    atk_tow = tow_lst[0]
-
-    # 가장 강한 포탑 선정
-    # 0 높음, 1 낮음, 2 낮음, 4 낮음
-    tow_lst.sort(key=lambda x: (-x[0], x[1], x[2], x[4]))
-    tgk_tow = tow_lst[0]
-    return
+    for i in range(n):
+        for j in range(m):
+            if arr[i][j] == 0: continue
+            if arr[i][j] < power:
+                power = arr[i][j]
+                ai, aj = i, j
+            elif arr[i][j] == power:
+                if attack_time[i][j] > attack_time[ai][aj]:
+                    ai, aj = i, j
+                elif attack_time[i][j] == attack_time[ai][aj]:
+                    if i + j > ai + aj:
+                        ai, aj = i, j
+                    elif i + j == ai + aj:
+                        if j > aj:
+                            aj = j
+    return ai, aj
 
 
-def laser():
-    global atk_tow, tgk_tow
-    atk, atk_turn, atk_ij, ai, aj = atk_tow
-    tgk, tgk_turn, tgk_ij, ti, tj = tgk_tow
+def target_check(ai, aj):
+    ti, tj = 0, 0
+    power = -1
+    for i in range(n):
+        for j in range(m):
+            if arr[i][j] == 0: continue
+            if i == ai and j == aj: continue
+            if arr[i][j] > power:
+                power = arr[i][j]
+                ti, tj = i, j
+            elif arr[i][j] == power:
+                if attack_time[i][j] < attack_time[ti][tj]:
+                    ti, tj = i, j
+                elif attack_time[i][j] == attack_time[ti][tj]:
+                    if i + j < ti + tj:
+                        ti, tj = i, j
+                    elif i + j == ti + tj:
+                        if j < tj:
+                            ti, tj  = i, j
+    return ti, tj
 
+
+def laser(ai, aj, ti, tj):
     q = deque()
-    q.append([ai, aj, []])
-    visited = [[False] * (m + 1) for _ in range(n + 1)]
+    q.append((ai, aj, []))
+    visited = [[False] * m for _ in range(n)]
     visited[ai][aj] = True
 
     while q:
-        ci, cj, route = q.popleft()
-
-        # 우 하 좌 상
-        dir = [[0, 1], [1, 0], [0, -1], [-1, 0]]
-
-        for k in range(len(dir)):
-            # 범위내 ㅇㅇ 맞음
-            ni, nj = (ci + dir[k][0]) % n, (cj + dir[k][1]) % m
-            ni = n if ni == 0 else ni
-            nj = m if nj == 0 else nj
-
+        i, j, route = q.popleft()
+        for k in range(4):
+            ni, nj = (i + di[k]) % n, (j + dj[k]) % m
             if visited[ni][nj]: continue
-            dd = arr[ni][nj]
             if arr[ni][nj] == 0: continue
 
+            # 타겟인 경우
             if (ni, nj) == (ti, tj):
-                route.append([ni, nj])
-                return route
+                arr[ni][nj] -= point
 
-            tmp_route = route[:]
-            tmp_route.append([ni, nj])
+                for ri, rj in route:
+                    arr[ri][rj] -= half_point
+                    attack[ri][rj] = True
+                return True
+
+            # 경로 체크
+            tmp_route = route[:] # deepcopy
+            tmp_route.append((ni, nj))
             visited[ni][nj] = True
-            q.append([ni, nj, tmp_route])
+            q.append((ni, nj, tmp_route))
+
+    # 도달 X 라면
     return False
 
 
-def tower_atk():
-    global atk_tow, tgk_tow
-
-    atk, atk_turn, atk_ij, ai, aj = atk_tow
-    tgk, tgk_turn, tgk_ij, ti, tj = tgk_tow
-
-    # 공격 tow turn 에 갱신
-    turn_arr[ai][aj] = turn
-    arr[ai][aj] = arr[ai][aj] + n + m
-    atk = atk + n + m
-
-    # repair 에 적용할 공격 받은 리스트
-    atk_lst = [[ai, aj], [ti, tj]]
-
-    # 공격 턴
-    laser_lst = laser()
-
-    if laser_lst != False:
-        # print("레이저다")
-        # print("공격자:", (ai, aj), ", 공격 받는자:", (ti, tj))
-        # print(laser_lst)
-        for ci, cj in laser_lst:
-            # 타겟 이라면
-            if (ci, cj) == (ti, tj):
-                cur_atk = arr[ti][tj] - atk
-                arr[ci][cj] = cur_atk if cur_atk > 0 else 0
-
-            # 그냥 포탑 이라면
-            else:
-                cur_atk = arr[ci][cj] - (atk // 2)
-                arr[ci][cj] = cur_atk if cur_atk > 0 else 0
-                atk_lst.append([ci, cj])
-
-    else:
-        # print("포탑 공격")
-        # print("공격자:", (ai, aj), ", 공격 받는자:", (ti, tj))
-        # print()
-
-        for di in range(-1, 2):
-            for dj in range(-1, 2):
-                ni, nj = (ti + di) % n, (tj + dj) % m
-                ni = n if ni == 0 else ni
-                nj = m if nj == 0 else nj
-                # print(ni, nj)
-
-                # 타겟 이라면
-                if (ni, nj) == (ti, tj):
-                    cur_atk = arr[ti][tj] - atk
-                    arr[ni][nj] = cur_atk if cur_atk > 0 else 0
-
-                # 타겟이 아니라면
-                else:
-                    cur_atk = arr[ni][nj] - (atk // 2)
-                    arr[ni][nj] = cur_atk if cur_atk > 0 else 0
-                    atk_lst.append([ni, nj])
+def boom(ai, aj, ti, tj):
+    arr[ti][tj] -= point
+    ddi, ddj = di + [1, 1, -1, -1], dj + [-1, 1, -1, 1]
+    for k in range(8):
+        ni, nj = (ti + ddi[k]) % n, (tj + ddj[k]) % m
+        if ni == ai and nj == aj: continue
+        arr[ni][nj] -= half_point
+        attack[ni][nj] = True
+    return
 
 
-    # Repair
-    # print(atk_lst)
-    for i in range(1, n + 1):
-        for j in range(1, m + 1):
-            if arr[i][j] > 0:
-                if [i, j] in atk_lst:
-                    pass
-                else:
-                    arr[i][j] += 1
+def break_check():
+    for i in range(n):
+        for j in range(m):
+            if arr[i][j] < 0:
+                arr[i][j] = 0
+    return
+
+
+def max_check():
+    return max([max(line) for line in arr])
+
+
+def turret_check():
+    turret = []
+    turret_cnt = 0
+    for i in range(n):
+        for j in range(m):
+            if arr[i][j] == 0: continue
+            turret_cnt += 1
+            if attack[i][j]: continue
+            turret.append((i, j))
+
+    if turret_cnt == 1:
+        print(max_check())
+        # 코드 끝내기
+        exit(0)
+    for i, j in turret:
+        arr[i][j] += 1
 
     return
 
 
-def print_strong():
-    ans_lst = []
-    for i in range(n + 1):
-        for j in range(m + 1):
-            if arr[i][j] > 0:
-                ans_lst.append([arr[i][j], turn_arr, i + j, i, j])
-    # 0 높음, 1 낮음, 2 낮음, 4 낮음
-    ans_lst.sort(key=lambda x: (-x[0], x[1], x[2], x[4]))
-    print(ans_lst[0][0])
-    return
+di, dj = [0, 1, 0, -1], [1, 0, -1, 0]
+n, m, k = map(int, input().split())
+arr = [list(map(int, input().split())) for _ in range(n)]
+attack_time = [[0] * m for _ in range(n)]  # 공격 시점 배열
+
+for time in range(1, k + 1):
+    # 공격 배열
+    attack = [[False] * m for _ in range(n)]
+
+    # 공격자 선정
+    ai, aj = attack_check()
+    arr[ai][aj] += n + m
+    point = arr[ai][aj]
+    half_point = point // 2
+    attack[ai][aj] = True
+    attack_time[ai][aj] = time
+
+    # 공격, 부서짐
+    ti, tj = target_check(ai, aj)
+    attack[ti][tj] = True
+
+    if not laser(ai, aj, ti, tj):
+        boom(ai, aj, ti, tj)
+
+    # 포탑 부서짐
+    break_check()
+
+    # 정비
+    turret_check()
 
 
-ans_flag = False
-for turn in range(1, k + 1):
-    laser_lst = []
-    atk_tow, tgk_tow = [], []
-    select_tow()
-    if ans_flag == True:
-        break
-
-    tower_atk()
-
-    # print("끝난 후:")
-    # pprint(arr)
-
-print_strong()
+print(max_check())
