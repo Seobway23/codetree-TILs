@@ -4,7 +4,6 @@
 
 from collections import deque
 
-
 n, m, k = map(int, input().split()) # n 행, m 열, k 턴
 arr = [[0 for _ in range(m + 1)] for _ in range(n + 1)]
 turn_arr = [[0 for _ in range(m + 1)] for _ in range(n + 1)]
@@ -43,13 +42,13 @@ def laser():
     atk, atk_turn, atk_ij, ai, aj = atk_tow
     tgk, tgk_turn, tgk_ij, ti, tj = tgk_tow
 
-    laser_list = []
     q = deque()
-    q.append([ai, aj])
+    q.append([ai, aj, []])
+    visited = [[False] * (m + 1) for _ in range(n + 1)]
+    visited[ai][aj] = True
 
     while q:
-        ci, cj = q.pop()
-        l_lst = []
+        ci, cj, route = q.popleft()
 
         # 우 하 좌 상
         dir = [[0, 1], [1, 0], [0, -1], [-1, 0]]
@@ -61,26 +60,17 @@ def laser():
             ni = n if ni == 0 else ni
             nj = m if nj == 0 else nj
 
-            # print("k:", k, ", 좌표:", (ni, nj))
+            if visited[ni][nj]: continue
+            if arr[ni][nj] == 0: continue
 
             if (ni, nj) == (ti, tj):
-                laser_list.append([ni, nj])
-                return laser_list
+                route.append([ni, nj])
+                return route
 
-            if arr[ni][nj] > 0 and [ai, aj] != [ni, nj]:
-                l_lst.append([k, ni, nj])
-
-        if l_lst:
-            # l_lst [0]: dir, [1]: i, [2]: j
-            l_lst.sort(key=lambda x: (x[0]))
-
-            if [l_lst[0][1], l_lst[0][2]] in laser_list:
-                # 이미 있으면 pass
-                pass
-            else:
-                # 리스트 에 추가
-                laser_list.append([l_lst[0][1], l_lst[0][2]])
-                q.append([l_lst[0][1], l_lst[0][2]])
+            tmp_route = route[:]
+            tmp_route.append([ni, nj])
+            visited[ni][nj] = True
+            q.append([ni, nj, tmp_route])
     return False
 
 
@@ -104,7 +94,7 @@ def tower_atk():
     if laser_lst != False:
         # print("레이저다")
         # print("공격자:", (ai, aj), ", 공격 받는자:", (ti, tj))
-        # print()
+        # print(laser_lst)
         for ci, cj in laser_lst:
             # 타겟 이라면
             if (ci, cj) == (ti, tj):
@@ -170,10 +160,7 @@ for turn in range(1, k + 1):
     laser_lst = []
     atk_tow, tgk_tow = [], []
     select_tow()
-    # print(atk_tow, tgk_tow)
     tower_atk()
-    # print("끝난 후")
-    # pprint(arr)
 
 print_strong()
 
