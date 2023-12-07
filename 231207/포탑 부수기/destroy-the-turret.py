@@ -13,7 +13,7 @@ for i in range(1, n + 1):
 
 
 def select_tow():
-    global atk_tow, tgk_tow
+    global atk_tow, tgk_tow, ans_flag
     # 포탑 리스트, 포탑 이라면 추가, key 값으로 sort 할 것
     tow_lst = []
 
@@ -21,13 +21,16 @@ def select_tow():
         for j in range(1, m + 1):
             if arr[i][j] > 0:
                 # 0 공격력, 1 최근 공격 포탑, 2 i + j, 3 i, 4 j
-
                 tow_lst.append([arr[i][j], turn_arr[i][j], i + j, i, j])
 
+    if len(tow_lst) == 1:
+        ans_flag = True
+        return
     # 가장 약한 포탑 선정
     # 0 낮음, 1 높음, 2 높음, 4 높음
     # x[0] , -x[1], -x[2], -x[4]
     tow_lst.sort(key=lambda x: (x[0], -x[1], -x[2], -x[4]))
+    # print(tow_lst)
     atk_tow = tow_lst[0]
 
     # 가장 강한 포탑 선정
@@ -53,14 +56,14 @@ def laser():
         # 우 하 좌 상
         dir = [[0, 1], [1, 0], [0, -1], [-1, 0]]
 
-        # 좌 상 하 우
         for k in range(len(dir)):
             # 범위내 ㅇㅇ 맞음
-            ni, nj = (ci + dir[k][0]) % n, (cj + dir[k][1]) % n
+            ni, nj = (ci + dir[k][0]) % n, (cj + dir[k][1]) % m
             ni = n if ni == 0 else ni
             nj = m if nj == 0 else nj
 
             if visited[ni][nj]: continue
+            dd = arr[ni][nj]
             if arr[ni][nj] == 0: continue
 
             if (ni, nj) == (ti, tj):
@@ -82,8 +85,8 @@ def tower_atk():
 
     # 공격 tow turn 에 갱신
     turn_arr[ai][aj] = turn
-    arr[ai][aj] += n + m
-    atk += n + m
+    arr[ai][aj] = arr[ai][aj] + n + m
+    atk = atk + n + m
 
     # repair 에 적용할 공격 받은 리스트
     atk_lst = [[ai, aj], [ti, tj]]
@@ -156,15 +159,17 @@ def print_strong():
     return
 
 
+ans_flag = False
 for turn in range(1, k + 1):
     laser_lst = []
     atk_tow, tgk_tow = [], []
     select_tow()
+    if ans_flag == True:
+        break
+
     tower_atk()
 
+    # print("끝난 후:")
+    # pprint(arr)
+
 print_strong()
-
-
-'''
-turn x[1] 값 갱신 해야 함
-'''
