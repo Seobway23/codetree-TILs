@@ -1,12 +1,17 @@
-n, m = input().split() # n 비트, m 밑
-m = int(m)
+n, m = input().split()
 
-sum = 0
-t = 0
-for i in range(len(n) - 1, -1, -1):
-    num = int(i)
-    sum +=  int(n[num]) * (m ** t)
-    t += 1
-    # print(num, t, sum)
+# string이 나오면 숫자로 바꾸기
+if m.isdigit():
+    m = int(m)
+else:
+    m = ord(m) - 55
+
+#메인 로직
+N, sum, up = len(n), 0, 0
+for i in range(N-1, -1, -1):
+    bit = int(n[i])
+    sum += bit * ( m ** up) 
+    up += 1
+    # print(sum, up, bit)
 
 print(sum)
